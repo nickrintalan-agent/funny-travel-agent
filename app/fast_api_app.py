@@ -37,9 +37,11 @@ from app.observability import (
 from app.tools import TOOL_JSON_SCHEMAS
 
 load_dotenv()
-allow_origins = (
-    os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else None
-)
+allow_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")
+    if origin.strip()
+] or ["*"]
 otel_to_cloud = True
 
 AGENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -89,6 +91,7 @@ app: FastAPI = get_fast_api_app(
     session_service_uri=services.SESSION_SERVICE_URI,
     otel_to_cloud=otel_to_cloud,
     lifespan=lifespan,
+    bind_host="0.0.0.0",
 )
 app.title = "funny-travel-agent"
 app.description = "API for interacting with the Agent funny-travel-agent"
