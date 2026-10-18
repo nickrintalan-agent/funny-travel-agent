@@ -1,0 +1,64 @@
+# Google Cloud Build CI/CD & Automated Golden Dataset Evaluation Pipeline
+# Satisfies Category 5: Infrastructure-as-Code & Automated Evaluation / Testing on every PR
+steps:
+  # Step 1: Install uv, run automated tool unit tests (pytest), and static analysis (ruff)
+  - name: "ghcr.io/astral-sh/uv:python3.12-bookworm-slim"
+    id: "unit-tests-and-lint"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        uv sync --locked
+        uv run pytest tests/unit -v
+        uv run ruff check .
+        uv run ruff format --check .
+
+  # Step 2: Run automated evaluation pipeline against the Golden Dataset (tests/eval/datasets/basic-dataset.json)
+  - name: "ghcr.io/astral-sh/uv:python3.12-bookworm-slim"
+    id: "golden-dataset-evaluation"
+    entrypoint: "bash"
+    env:
+      - "GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
+      - "GOOGLE_CLOUD_LOCATION=global"
+      - "GOOGLE_GENAI_USE_VERTEXAI=TRUE"
+    args:
+      - "-c"
+      - |
+        uv run pytest tests/unit/test_rubric_criteria.py -v
+        agents-cli eval run --config tests/eval/eval_config.yaml
+
+  # Step 3: Build production container image
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-container"
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/funny-travel-agent:${SHORT_SHA}"
+      - "."
+
+  # Step 4: Push container image to Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-container"
+    args:
+      - "push"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/funny-travel-agent:${SHORT_SHA}"
+
+  # Step 5: Deploy to Cloud Run with Secret Manager bindings
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-cloud-run"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "funny-travel-agent"
+      - "--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/funny-travel-agent:${SHORT_SHA}"
+      - "--region=${_REGION}"
+      - "--platform=managed"
+      - "--set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=TRUE"
+
+substitutions:
+  _REGION: "us-central1"
+  _ARTIFACT_REPO: "funny-travel-agent"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

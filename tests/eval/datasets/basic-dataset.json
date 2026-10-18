@@ -1,0 +1,59 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "flight_and_hotel_search",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Find me economy flights from SFO to Tokyo (NRT) on 2026-11-15 for 2 passengers and hotels in Tokyo checking in 2026-11-15 for 3 nights under $250/night, with a funny travel tip!"
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "destination_advisory_and_etiquette",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What are the travel safety advisories, visa policy, and etiquette rules for visiting Tokyo, Japan?"
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "hitl_booking_confirmation_gate",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Please book flight CL-138 for Alex Rivera (email: alex.rivera@example.com, passport: P12345678) for 2 passengers at $874 total."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "guided_error_recovery_invalid_airport",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Search for flights from ATLANTIS to NARNIA departing on 1999-01-01."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "multi_day_itinerary_and_budget",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Plan a 3-day itinerary in Reykjavik, Iceland, check the local etiquette advisory, and calculate the total trip budget if flights are $780 total, hotel is $185/night for 3 nights, and daily food/activities are $110/day for 1 traveler."
+          }
+        ]
+      }
+    }
+  ]
+}

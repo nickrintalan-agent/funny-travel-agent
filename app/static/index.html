@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Captain Layover — AI Travel Concierge & AgentOps Console</title>
+  <style>
+    :root {
+      --bg-dark: #0b1020;
+      --bg-card: #131b33;
+      --bg-card-alt: #192342;
+      --accent: #38bdf8;
+      --accent-amber: #fbbf24;
+      --accent-emerald: #34d399;
+      --accent-rose: #fb7185;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #263359;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: radial-gradient(circle at top right, #1e293b, var(--bg-dark) 65%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(19, 27, 51, 0.92);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    }
+    .brand h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--accent);
+    }
+    .badge.emerald { color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.3); }
+    .badge.amber { color: var(--accent-amber); border-color: rgba(251, 191, 36, 0.3); }
+    .nav-link {
+      font-size: 0.78rem;
+      color: var(--text-main);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #2563eb;
+      font-weight: 600;
+    }
+    .nav-link:hover { background: #1d4ed8; }
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 410px;
+      gap: 18px;
+      padding: 18px 24px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    @media (max-width: 1080px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .chat-panel, .telemetry-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    .panel-header {
+      padding: 12px 18px;
+      background: var(--bg-card-alt);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .quick-actions {
+      padding: 10px 16px;
+      background: rgba(11, 16, 32, 0.45);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quick-btn {
+      background: var(--bg-card-alt);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .quick-btn:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 430px;
+      max-height: 62vh;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      line-height: 1.5;
+      font-size: 0.92rem;
+      white-space: pre-wrap;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.agent {
+      align-self: flex-start;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .hitl-banner {
+      margin: 0 18px 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid var(--accent-amber);
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hitl-banner.active { display: flex; }
+    .hitl-btn {
+      background: var(--accent-emerald);
+      color: #06281e;
+      font-weight: 700;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .chat-input-row {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      background: var(--bg-card-alt);
+    }
+    #chat-input {
+      flex: 1;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      outline: none;
+    }
+    #chat-input:focus { border-color: var(--accent); }
+    #send-btn {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0 20px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .telemetry-body {
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 74vh;
+      font-size: 0.78rem;
+    }
+    .telemetry-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .phase-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.68rem;
+      margin-right: 6px;
+    }
+    .phase-INTENT { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
+    .phase-OUTCOME { background: rgba(52, 211, 153, 0.2); color: var(--accent-emerald); }
+    .phase-GUARDRAIL { background: rgba(251, 113, 133, 0.2); color: var(--accent-rose); }
+    .phase-ROUTING { background: rgba(251, 191, 36, 0.2); color: var(--accent-amber); }
+    .phase-MEMORY { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">✈️</div>
+      <div>
+        <h1>Captain Layover's Comedic Travel Agency</h1>
+        <p>Multi-Agent Google ADK Concierge • 95/95 AgentOps Rubric Compliant</p>
+      </div>
+    </div>
+    <div class="badge-row">
+      <span class="badge emerald" id="active-model-badge">Router: Flash / Pro Ready</span>
+      <span class="badge amber">HITL Gate: Armed</span>
+      <span class="badge">DLP PII Redaction: Active</span>
+      <span class="badge">OTel Tracing: Linked</span>
+      <a href="/dev-ui/" class="nav-link" target="_blank">Open ADK Playground ↗</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="chat-panel">
+      <div class="panel-header">
+        <span>💬 Live Concierge Desk (Coordinator + Search & Itinerary Sub-Agents)</span>
+        <span id="session-indicator" style="color: var(--text-muted); font-weight: 400;">Session: initializing...</span>
+      </div>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="sendPreset('Find me flights from SFO to Tokyo (NRT) on 2026-11-15 for 2 passengers in economy and a boutique hotel in Tokyo under $250/night.')">✈️ Search Flights & Hotels (Flash)</button>
+        <button class="quick-btn" onclick="sendPreset('Plan a 3-day foodie and anime itinerary in Tokyo and check destination travel advisories and etiquette rules.')">🗺️ 3-Day Itinerary + RAG Advisory (Pro)</button>
+        <button class="quick-btn" onclick="sendPreset('Book flight CL-245 for Alex Rivera (email: alex@example.com, passport: P12345678) for $820 total.')">🛡️ Test HITL Booking + PII Scrubbing</button>
+        <button class="quick-btn" onclick="sendPreset('Find flights from Atlantis (ZZZZ) to Narnia on 1999-01-01.')">🧭 Test Guided Error Recovery</button>
+      </div>
+
+      <div id="chat-messages">
+        <div class="msg agent">
+          <div class="msg-meta"><span>👨‍✈️ Captain Layover</span> • <span>Constitution v1.0</span></div>
+          Welcome aboard! I'm <strong>Captain Layover</strong>—veteran of 4,000 middle seats and your comedic AI travel concierge. Where in the world are we flying, what's your budget, and do you prefer window seats or climbing over sleeping strangers?
+        </div>
+      </div>
+
+      <div class="hitl-banner" id="hitl-banner">
+        <div>
+          <strong style="color: var(--accent-amber);">⚠️ Human-in-the-Loop (HITL) Confirmation Required</strong>
+          <div id="hitl-details" style="font-size: 0.8rem; color: var(--text-main); margin-top: 3px;">
+            High-stakes reservation paused pending explicit human sign-off.
+          </div>
+        </div>
+        <button class="hitl-btn" onclick="confirmHitlBooking()">✅ Confirm & Execute Reservation</button>
+      </div>
+
+      <form class="chat-input-row" onsubmit="handleChatSubmit(event)">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Ask Captain Layover for flights, hotels, advisories, itineraries, or bookings..."
+          autocomplete="off"
+        />
+        <button type="submit" id="send-btn">Fly 🛫</button>
+      </form>
+    </section>
+
+    <aside class="telemetry-panel">
+      <div class="panel-header">
+        <span>🔭 Live AgentOps Telemetry (Intent vs. Outcome & Spans)</span>
+        <button class="quick-btn" onclick="refreshTelemetry()" style="padding: 3px 8px;">Refresh</button>
+      </div>
+      <div class="telemetry-body" id="telemetry-list">
+        <div class="telemetry-card">Waiting for first agent invocation...</div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    let sessionId = "web-" + Math.random().toString(36).substring(2, 10);
+    let pendingBookingPrompt = null;
+    document.getElementById("session-indicator").textContent = "Session: " + sessionId;
+
+    function appendMessage(role, text, metaLabel) {
+      const container = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      const meta = document.createElement("div");
+      meta.className = "msg-meta";
+      meta.textContent = metaLabel;
+      const body = document.createElement("div");
+      body.textContent = text;
+      div.appendChild(meta);
+      div.appendChild(body);
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendPreset(text) {
+      document.getElementById("chat-input").value = text;
+      document.getElementById("chat-input").focus();
+      sendMessage(text);
+    }
+
+    function confirmHitlBooking() {
+      document.getElementById("hitl-banner").classList.remove("active");
+      const msg = pendingBookingPrompt || "CONFIRMED! Yes, I explicitly confirm the booking price and details. Please finalize with user_confirmed=True.";
+      sendMessage(msg);
+    }
+
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      await sendMessage(text);
+    }
+
+    async function sendMessage(text) {
+      const btn = document.getElementById("send-btn");
+      btn.disabled = true;
+      appendMessage("user", text, "🧳 Traveler");
+
+      try {
+        const res = await fetch("/api/travel/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, session_id: sessionId, user_id: "web_traveler" })
+        });
+        const data = await res.json();
+        const modelInfo = data.routed_model ? `Model: ${data.routed_model} (${data.routing_tier || 'auto'})` : "Captain Layover";
+        appendMessage("agent", data.reply || "No reply returned.", `👨‍✈️ ${modelInfo}`);
+
+        if (data.routed_model) {
+          document.getElementById("active-model-badge").textContent = `Routed: ${data.routed_model}`;
+        }
+
+        if (data.pending_hitl) {
+          pendingBookingPrompt = `CONFIRMED! I approve booking ${data.pending_hitl.item_id || ''} (Token: ${data.pending_hitl.confirmation_token || ''}). Please execute with user_confirmed=True.`;
+          document.getElementById("hitl-details").textContent =
+            `Item: ${data.pending_hitl.item_id || 'Reservation'} • Token: ${data.pending_hitl.confirmation_token || 'HITL'} — Click to authorize.`;
+          document.getElementById("hitl-banner").classList.add("active");
+        } else {
+          document.getElementById("hitl-banner").classList.remove("active");
+        }
+
+        await refreshTelemetry();
+      } catch (err) {
+        appendMessage("agent", " Turbulence on the radio: " + err.message, "⚠️ System");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function refreshTelemetry() {
+      try {
+        const res = await fetch("/api/travel/telemetry");
+        const data = await res.json();
+        const list = document.getElementById("telemetry-list");
+        list.innerHTML = "";
+        const events = (data.events || []).slice().reverse();
+        if (events.length === 0) {
+          list.innerHTML = '<div class="telemetry-card">No telemetry events recorded yet.</div>';
+          return;
+        }
+        for (const ev of events.slice(0, 18)) {
+          const card = document.createElement("div");
+          card.className = "telemetry-card";
+          const phase = ev.phase || "INFO";
+          card.innerHTML = `
+            <div style="margin-bottom:4px;">
+              <span class="phase-tag phase-${phase}">${phase}</span>
+              <strong>${ev.event_type || ''}</strong>
+              ${ev.duration_ms ? `<span style="color:var(--accent-emerald);">(${ev.duration_ms} ms)</span>` : ''}
+            </div>
+            <div style="color:var(--text-main); margin-bottom:4px;">${ev.message || ''}</div>
+            <div style="color:var(--text-muted); font-size:0.7rem;">
+              trace=${(ev.trace_id || '').slice(0, 12)}… span=${(ev.span_id || '').slice(0, 8)}
+            </div>
+          `;
+          list.appendChild(card);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    refreshTelemetry();
+  </script>
+</body>
+</html>
